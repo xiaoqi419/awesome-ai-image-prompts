@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🎨 AI 图像提示词搜索</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    background: #f0f2f5;
+    color: #333;
+  }
+  .header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 24px 20px;
+    text-align: center;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+  }
+  .header h1 { font-size: 24px; margin-bottom: 8px; }
+  .header p { font-size: 14px; opacity: 0.9; }
+  .search-box {
+    max-width: 700px;
+    margin: 16px auto 0;
+    display: flex;
+    gap: 8px;
+  }
+  .search-box input {
+    flex: 1;
+    padding: 12px 16px;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    outline: none;
+  }
+  .search-box select, .search-box button {
+    padding: 10px 16px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    cursor: pointer;
+    background: rgba(255,255,255,0.9);
+  }
+  .search-box button {
+    background: #ff6b6b;
+    color: white;
+    font-weight: bold;
+  }
+  .stats-bar {
+    max-width: 1200px;
+    margin: 12px auto 0;
+    font-size: 13px;
+    opacity: 0.85;
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+  .main {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+  .filters {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+  .filter-tag {
+    padding: 4px 12px;
+    border-radius: 16px;
+    font-size: 13px;
+    cursor: pointer;
+    background: #e8e8e8;
+    transition: all 0.2s;
+    border: none;
+  }
+  .filter-tag:hover { transform: translateY(-1px); }
+  .filter-tag.active {
+    background: #667eea;
+    color: white;
+  }
+  .results { display: grid; gap: 16px; }
+  .card {
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    transition: box-shadow 0.2s;
+  }
+  .card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.12); }
+  .card-inner { display: flex; flex-wrap: wrap; }
+  .card-image {
+    width: 240px;
+    min-height: 180px;
+    flex-shrink: 0;
+    background: #f5f5f5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  .card-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    min-height: 180px;
+  }
+  .card-image .no-img {
+    color: #999;
+    font-size: 32px;
+    text-align: center;
+  }
+  .card-body {
+    flex: 1;
+    padding: 16px 20px;
+    min-width: 280px;
+  }
+  .card-title {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: #1a1a1a;
+  }
+  .card-meta {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+  }
+  .card-meta span {
+    font-size: 12px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: #f0f2f5;
+  }
+  .card-meta .cat { background: #e3f2fd; color: #1565c0; }
+  .card-meta .src { background: #fce4ec; color: #c62828; }
+  .card-meta .author { background: #e8f5e9; color: #2e7d32; }
+  .card-prompt {
+    font-size: 13px;
+    color: #555;
+    line-height: 1.6;
+    max-height: 72px;
+    overflow: hidden;
+    cursor: pointer;
+    position: relative;
+    margin-bottom: 8px;
+    transition: max-height 0.3s;
+  }
+  .card-prompt.expanded {
+    max-height: none;
+  }
+  .card-prompt::after {
+    content: '... 展开';
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    background: white;
+    padding: 0 4px;
+    font-size: 12px;
+    color: #667eea;
+  }
+  .card-prompt.expanded::after { display: none; }
+  .card-actions {
+    display: flex;
+    gap: 8px;
+  }
+  .card-actions button {
+    padding: 6px 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 12px;
+    cursor: pointer;
+    background: white;
+    transition: all 0.2s;
+  }
+  .card-actions button:hover {
+    background: #667eea;
+    color: white;
+    border-color: #667eea;
+  }
+  .card-images-grid {
+    display: none;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 12px 20px;
+    border-top: 1px solid #eee;
+  }
+  .card-images-grid.show { display: flex; }
+  .card-images-grid img {
+    width: 120px;
+    height: 90px;
+    object-fit: cover;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: transform 0.2s;
+  }
+  .card-images-grid img:hover { transform: scale(1.05); }
+  .empty {
+    text-align: center;
+    padding: 60px 20px;
+    color: #999;
+  }
+  .empty h3 { font-size: 20px; margin-bottom: 8px; }
+  .toast {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #333;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    z-index: 999;
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+  }
+  .toast.show { opacity: 1; }
+  
+  @media (max-width: 640px) {
+    .card-image { width: 100%; height: 200px; }
+    .search-box { flex-wrap: wrap; }
+    .header h1 { font-size: 20px; }
+  }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>🎨 AI 图像提示词搜索</h1>
+  <p>聚合 935 条来自 5 个开源项目的 GPT Image 2 / ChatGPT 图像生成提示词</p>
+  <div class="search-box">
+    <input type="text" id="searchInput" placeholder="搜索提示词、分类、作者..." oninput="doSearch()">
+    <select id="sourceFilter" onchange="doSearch()">
+      <option value="">全部来源</option>
+      <option value="Banana">Banana Prompt Quicker</option>
+      <option value="itgoyo">itgoyo/awesome-gpt-image2-prompt</option>
+    </select>
+    <button onclick="doSearch()">🔍 搜索</button>
+  </div>
+  <div class="stats-bar">
+    <span id="totalCount">加载中...</span>
+    <span id="resultCount"></span>
+  </div>
+</div>
+
+<div class="main">
+  <div class="filters" id="categoryFilters"></div>
+  <div class="results" id="results"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// All prompts data
+let allPrompts = [];
+let totalPrompts = 0;
+
+// Load data
+async function loadData() {
+  try {
+    const resp = await fetch('prompts_unified.json');
+    const data = await resp.json();
+    totalPrompts = data.total;
+    allPrompts = data.prompts;
+    
+    // Build category filters
+    const cats = {};
+    allPrompts.forEach(p => {
+      const c = p.category || '未分类';
+      cats[c] = (cats[c] || 0) + 1;
+    });
+    
+    const filterBar = document.getElementById('categoryFilters');
+    let html = '<button class="filter-tag active" data-cat="" onclick="filterByCat(this, \'\')">全部</button>';
+    Object.entries(cats).sort((a,b) => b[1]-a[1]).forEach(([cat, count]) => {
+      html += `<button class="filter-tag" data-cat="${cat}" onclick="filterByCat(this, '${cat}')">${cat} (${count})</button>`;
+    });
+    filterBar.innerHTML = html;
+    
+    document.getElementById('totalCount').textContent = `📦 共 ${totalPrompts} 条提示词`;
+    doSearch();
+  } catch(e) {
+    console.error('Load error:', e);
+    document.getElementById('results').innerHTML = 
+      '<div class="empty"><h3>😿 加载数据失败</h3><p>请确保 prompts_unified.json 文件存在</p></div>';
+  }
+}
+
+let currentCategory = '';
+let currentSource = '';
+
+function filterByCat(el, cat) {
+  currentCategory = cat;
+  document.querySelectorAll('.filter-tag').forEach(e => e.classList.remove('active'));
+  el.classList.add('active');
+  doSearch();
+}
+
+function doSearch() {
+  const query = document.getElementById('searchInput').value.trim().toLowerCase();
+  const source = document.getElementById('sourceFilter').value;
+  
+  let results = allPrompts;
+  
+  // Filter by source
+  if (source) {
+    results = results.filter(p => p.source && p.source.includes(source));
+  }
+  
+  // Filter by category
+  if (currentCategory) {
+    results = results.filter(p => (p.category || '未分类') === currentCategory);
+  }
+  
+  // Filter by search query
+  if (query) {
+    results = results.filter(p => {
+      const searchText = [
+        p.title, p.prompt, p.category, p.sub_category, 
+        p.author, p.source
+      ].filter(Boolean).join(' ').toLowerCase();
+      return searchText.includes(query);
+    });
+  }
+  
+  renderResults(results);
+}
+
+function renderResults(results) {
+  const container = document.getElementById('results');
+  document.getElementById('resultCount').textContent = 
+    results.length === 0 ? '😿 没有找到匹配结果' : `共 ${results.length} 条结果`;
+  
+  if (results.length === 0) {
+    container.innerHTML = '<div class="empty"><h3>😿 没有找到匹配结果</h3><p>试试换个关键词搜索</p></div>';
+    return;
+  }
+  
+  let html = '';
+  results.forEach((p, i) => {
+    const previewImg = p.preview_image || p.preview || (p.images && p.images[0]) || p.reference_image_urls?.[0] || '';
+    const allImgs = [];
+    if (p.images) p.images.forEach(u => { if (!allImgs.includes(u)) allImgs.push(u); });
+    if (p.reference_image_urls) p.reference_image_urls.forEach(u => { if (!allImgs.includes(u)) allImgs.push(u); });
+    if (previewImg && !allImgs.includes(previewImg)) allImgs.unshift(previewImg);
+    
+    const promptId = `prompt-${i}`;
+    const truncated = p.prompt && p.prompt.length > 150;
+    
+    html += `
+      <div class="card">
+        <div class="card-inner">
+          <div class="card-image">
+            ${previewImg ? `<img src="${previewImg}" alt="${p.title}" loading="lazy" onerror="this.parentElement.innerHTML='<div class=\\'no-img\\'>🖼️</div>'">` 
+                         : '<div class="no-img">🖼️</div>'}
+          </div>
+          <div class="card-body">
+            <div class="card-title">${escapeHtml(p.title || '未命名提示词')}</div>
+            <div class="card-meta">
+              <span class="cat">${escapeHtml(p.category || '未分类')}${p.sub_category ? ' / ' + escapeHtml(p.sub_category) : ''}</span>
+              <span class="src">${escapeHtml(p.source || '未知来源')}</span>
+              ${p.author ? `<span class="author">${escapeHtml(p.author)}</span>` : ''}
+            </div>
+            <div class="card-prompt ${truncated ? '' : 'expanded'}" id="${promptId}" onclick="togglePrompt('${promptId}')">
+              ${escapeHtml(p.prompt ? (p.prompt.length > 300 ? p.prompt.slice(0, 300) + '...' : p.prompt) : '')}
+            </div>
+            <div class="card-actions">
+              <button onclick="copyPrompt('${promptId}')">📋 复制</button>
+              ${allImgs.length > 1 ? `<button onclick="toggleImages('imgs-${i}')">🖼️ ${allImgs.length}张图</button>` : ''}
+            </div>
+          </div>
+        </div>
+        ${allImgs.length > 1 ? `<div class="card-images-grid" id="imgs-${i}">${allImgs.slice(1).map(u => `<img src="${u}" loading="lazy" onclick="window.open('${u}')" onerror="this.style.display='none'">`).join('')}</div>` : ''}
+      </div>
+    `;
+  });
+  
+  container.innerHTML = html;
+}
+
+function togglePrompt(id) {
+  const el = document.getElementById(id);
+  if (el) el.classList.toggle('expanded');
+}
+
+function toggleImages(id) {
+  const el = document.getElementById(id);
+  if (el) el.classList.toggle('show');
+}
+
+function copyPrompt(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const text = el.textContent.trim();
+  navigator.clipboard.writeText(text).then(() => {
+    showToast('✅ 已复制到剪贴板');
+  }).catch(() => {
+    // Fallback
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    ta.remove();
+    showToast('✅ 已复制到剪贴板');
+  });
+}
+
+function escapeHtml(text) {
+  if (!text) return '';
+  return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+             .replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+}
+
+function showToast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2000);
+}
+
+// Load
+loadData();
+</script>
+</body>
+</html>

@@ -1,82 +1,74 @@
 # 🎨 Awesome AI Image Prompts Collection
 
-> 精选AI图像生成提示词合集 | Aggregated collection of exceptional AI image generation prompts
+> 精选AI图像生成提示词合集 + 关键词搜索工具 | Aggregated collection with search
 
-[![GitHub stars](https://img.shields.io/github/stars/xiaoqi419/awesome-ai-image-prompts)](https://github.com/xiaoqi419/awesome-ai-image-prompts/stargazers)
+[![GitHub](https://img.shields.io/badge/GitHub-xiaoqi419%2Fawesome--ai--image--prompts-blue)](https://github.com/xiaoqi419/awesome-ai-image-prompts)
 
-## 📋 概述 | Overview
+## 🚀 一键试用
 
-本仓库聚合了多个开源项目中高质量 AI 图像生成提示词（Prompt）。
-目前共收录 **323 条结构化 JSON 提示词 + 612 条 Markdown 提示词 + 多个精选合集**，主要面向 **GPT Image 2 (gpt-image-2)**、ChatGPT Images、Gemini、DALL-E、FLUX 等模型。
+```bash
+# 使用 Python 标准库（无需安装依赖）
+python3 serve.py
 
-## 📦 数据来源 | Sources
+# 或使用 Flask（功能更完整）
+pip install flask && python3 server.py
+```
 
-| # | 来源 | ⭐ | 数量 | 格式 | 说明 |
-|---|------|---|------|------|------|
-| 1 | [Banana Prompt Quicker](https://github.com/glidea/banana-prompt-quicker) 🍌 | - | **323** | ✅ JSON结构化 | 唯一提供结构化JSON数据的源，含分类、作者、预览图 |
-| 2 | [ZeroLu/awesome-gpt-image](https://github.com/ZeroLu/awesome-gpt-image) | 1823 | 精选集 | README | 精选 GPT Image 2 提示词，X平台创作者 |
-| 3 | [itgoyo/awesome-gpt-image2-prompt](https://github.com/itgoyo/awesome-gpt-image2-prompt) | 98 | **612** | README+图片 | 中文提示词，689张效果图（75MB） |
-| 4 | [ziguishian/Awesome-ChatGPT-Images-2.0](https://github.com/ziguishian/Awesome-ChatGPT-Images-2.0) | 24 | 示例集 | README | ChatGPT-Images-2.0 提示词示例 |
-| 5 | [underwoodxie/promptsref-gpt-image-prompts](https://github.com/underwoodxie/promptsref-gpt-image-prompts) | 12 | 示例集 | README | GPT Image 提示词模板 |
-| 6 | [EddieTYP/image-prompt-library](https://github.com/EddieTYP/image-prompt-library) | 121 | - | Electron应用 | 本地提示词库工具（非纯集合） |
+然后访问 **http://localhost:5000** 即可搜索提示词 🎉
 
-> **提示**: 除 Banana Prompt Quicker 外，其他源提示词以 README 形式展示。
-> 图片文件因体积较大（约 75MB）未全部收录，需直接访问源仓库。
+## 📦 数据规模
+
+| 来源 | ⭐ | 提示词数 | 格式 |
+|------|---|---------|------|
+| 🍌 Banana Prompt Quicker | - | **323** | JSON结构化 |
+| ⭐ ZeroLu/awesome-gpt-image | 1823 | 精选集 | README |
+| 📝 itgoyo/awesome-gpt-image2-prompt | 98 | **612** | README+689图 |
+| 🌟 Awesome-ChatGPT-Images-2.0 | 24 | 示例集 | README |
+| 📖 promptsref-gpt-image-prompts | 12 | 示例集 | README |
+| 🖥️ image-prompt-library | 121 | 工具 | README |
+
+**总计: 935 条提示词，支持关键词/分类/来源搜索**
+
+## 🔍 功能特点
+
+- **关键词搜索**: 搜索标题、提示词内容、分类、作者
+- **分类筛选**: 按来源、按品类（有趣/生活/工作/学习/NSFW）
+- **图片预览**: 含参考图/效果图（来自原仓库 CDN）
+- **一键复制**: 复制提示词到剪贴板
+- **多图浏览**: itgoyo 的 689 张效果图可直接查看
+- **即时响应**: 纯前端搜索，无需后端依赖
 
 ## 📁 目录结构
 
 ```
-awesome-ai-image-prompts/
-├── README.md
-├── sources/
-│   └── SOURCES.md                          # 来源详情
-├── data/
+├── index.html                       # 🔍 搜索界面（主入口）
+├── prompts_unified.json             # 📊 聚合的 935 条提示词
+├── serve.py                         # 🖥️ 简易 HTTP 服务器（零依赖）
+├── server.py                        # 🖥️ Flask 服务器
+├── scripts/
+│   ├── extract_prompts.py           # 🔧 从各源提取提示词
+│   └── format-check.py              # 🔧 JSON 格式检查
+├── data/                            # 📚 原始来源文件
 │   ├── banana-prompt-quicker/
-│   │   └── prompts.json                    # 323条结构化提示词 ⭐核心
-│   ├── awesome-gpt-image/                  # ZeroLu 精选
-│   ├── awesome-chatgpt-images2/            # ziguishian 示例
-│   ├── promptsref/                         # underwoodxie 示例
-│   ├── itgoyo-gpt-image2-prompt/           # 612条提示词 README
-│   └── image-prompt-library/               # EddieTYP 应用
-└── scripts/
-    └── format-check.py                     # 格式检查工具
+│   ├── awesome-gpt-image/
+│   ├── awesome-chatgpt-images2/
+│   ├── promptsref/
+│   ├── itgoyo-gpt-image2-prompt/
+│   └── image-prompt-library/
+└── sources/
+    └── SOURCES.md
 ```
 
-## 🎯 结构化提示词格式（Banana Prompt Quicker）
+## 🎯 搜索使用技巧
 
-```json
-{
-  "title": "渐变玻璃风格PPT",
-  "preview": "https://...",
-  "prompt": "你是一位专家级UI UX演示设计师...",
-  "author": "@op7418",
-  "category": "工作",
-  "sub_category": "PPT",
-  "mode": "generate",
-  "created": "2025-12-21T12:37:02Z"
-}
-```
-
-## 🚀 快速使用
-
-```bash
-# 查看结构化的323条提示词
-python3 -c "
-import json
-d = json.load(open('data/banana-prompt-quicker/prompts.json'))
-print(f'总提示词数: {len(d)}')
-cats = {}
-for p in d:
-    cats[p.get('category','?')] = cats.get(p.get('category','?'), 0) + 1
-for c, n in sorted(cats.items(), key=lambda x:-x[1]):
-    print(f'  {c}: {n}条')
-"
-```
+- 搜索 **"PPT"** → 找到所有 PPT 相关提示词
+- 搜索 **"op7418"** → 找到特定作者作品
+- 选择来源 **"Banana"** → 只看结构化 JSON 数据
+- 点击分类标签 → 按品类筛选
+- 点击提示词 → 展开/收起完整内容
+- 点击 **📋 复制** → 复制提示词
 
 ## 📜 许可
 
-各来源内容遵循其原始仓库的开源许可协议。本聚合仓库整理脚本采用 MIT 许可。
-
-## 🤝 贡献
-
-欢迎通过 Issue 或 PR 推荐更多高质量的提示词资源！
+各来源内容遵循其原始仓库的开源许可协议。
+聚合数据整理脚本采用 MIT 许可。
